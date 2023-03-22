@@ -1,16 +1,18 @@
-import React, { ReactElement, ReactNode } from 'react'
-import { render, RenderOptions } from '@testing-library/react'
+import React, { ReactElement } from 'react'
+import { render } from '@testing-library/react'
 import theme from '@/styles/theme'
-import { ThemeProvider } from '@mui/material'
+import { ThemeProvider } from '@chakra-ui/react'
 
-const wrapper = ({ children }: { children: ReactNode }) => {
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>
+interface WrapperProps {
+  children: JSX.Element
 }
 
-const customRender = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) => render(ui, { wrapper, ...options })
+const renderWithProviders = (ui: ReactElement) => {
+  const Wrapper = ({ children }: WrapperProps) => (
+    <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  )
 
-export * from '@testing-library/react'
-export { customRender as render }
+  return render(ui, { wrapper: Wrapper })
+}
+
+export default renderWithProviders
