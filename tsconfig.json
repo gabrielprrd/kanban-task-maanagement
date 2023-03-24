@@ -25,7 +25,8 @@
       "@/data/*": ["./src/data/*"],
       "@/models/*": ["./src/models/*"],
       "@/mocks/*": ["./src/mocks/*"],
-      "@/config/*": ["./src/config/*"]
+      "@/config/*": ["./src/config/*"],
+      "@/public/*": ["./public/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
