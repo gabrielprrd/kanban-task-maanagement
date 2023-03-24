@@ -3,6 +3,7 @@ import theme from '@/styles/theme'
 import Head from 'next/head'
 import { ChakraProvider } from '@chakra-ui/react'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import DashboardLayout from '@/components/layouts/Dashboard'
 
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] })
 
@@ -18,7 +19,9 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="shortcut icon" href="/favicon.png" />
       </Head>
       <ChakraProvider resetCSS theme={theme}>
-        <Component {...pageProps} />
+        <DashboardLayout>
+          <Component {...pageProps} />
+        </DashboardLayout>
       </ChakraProvider>
     </>
   )
