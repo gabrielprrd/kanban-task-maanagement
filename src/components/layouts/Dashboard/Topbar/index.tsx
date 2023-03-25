@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Flex,
   Heading,
@@ -12,11 +13,13 @@ import {
   PopoverContent,
   PopoverTrigger,
   Text,
+  useColorModeValue,
 } from '@chakra-ui/react'
 import AppLogo from '../AppLogo'
 import Navbar from '../Navbar'
 import { FaEllipsisV, FaChevronDown } from 'react-icons/fa'
 import { AddIcon } from '@chakra-ui/icons'
+import ThemeSwitcher from '../ThemeSwitcher'
 
 export default function Topbar() {
   return (
@@ -24,6 +27,7 @@ export default function Topbar() {
       h="100%"
       borderBottom=".5px solid"
       borderColor="#828FA3"
+      bgColor={useColorModeValue('#FFFFFF', '#2B2C37')}
       p={3}
       justify="space-between"
     >
@@ -41,7 +45,12 @@ export default function Topbar() {
             />
           </PopoverTrigger>
           <PopoverContent>
-            <Navbar />
+            <Flex direction="column">
+              <Navbar />
+              <Box m={4}>
+                <ThemeSwitcher />
+              </Box>
+            </Flex>
           </PopoverContent>
         </Popover>
       </Flex>
