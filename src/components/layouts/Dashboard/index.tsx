@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: Props) {
             overflow="auto"
             h="100%"
             w="100%"
-            bgColor={useColorModeValue('#F4F7FD', '#2B2C37')}
+            bgColor={useColorModeValue('#F4F7FD', '#20212C')}
           >
             {children}
           </Box>
