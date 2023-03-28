@@ -19,9 +19,10 @@ export default function DashboardLayout({ children }: Props) {
     <>
       <Grid
         h="100vh"
+        maxH="100vh"
         w="100vw"
         overflow="hidden"
-        templateRows="80px 1fr"
+        templateRows="10vh 1fr"
         templateColumns={{
           base: '1fr',
           sm: isSidebarHidden ? '0px 1fr' : '200px 1fr',
@@ -36,10 +37,10 @@ export default function DashboardLayout({ children }: Props) {
         </GridItem>
         <GridItem colSpan={{ base: 3, sm: 1 }} zIndex={0}>
           <Box
-            overflow="auto"
             h="100%"
             w="100%"
             bgColor={useColorModeValue('#F4F7FD', '#20212C')}
+            overflow="auto"
           >
             {children}
           </Box>

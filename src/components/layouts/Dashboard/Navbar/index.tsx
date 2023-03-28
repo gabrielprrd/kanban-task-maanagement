@@ -5,17 +5,14 @@ import IconBoard from '@/public/icons/icon-board.svg'
 import { AddIcon } from '@chakra-ui/icons'
 import NextLink from 'next/link'
 import { useRouter } from 'next/router'
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+import { getBoards, boardsEndpoint as cacheKey } from '@/services/api'
 
 export default function Navbar() {
-  const { data, error } = useSWR('/api/staticdata', fetcher)
+  const { data, error, isLoading } = useSWR(cacheKey, getBoards)
   const router = useRouter()
 
   if (error) return <div>Failed to load</div>
-  if (!data) return <div>Loading...</div>
-
-  const parsedData = JSON.parse(data)
+  if (isLoading) return <div>Loading...</div>
 
   function displayBoardForm() {
     // TODO: create Board Form
@@ -24,9 +21,9 @@ export default function Navbar() {
   return (
     <Flex direction="column" px={2}>
       <Text p={3} size="md" color="#828FA3" letterSpacing={1}>
-        ALL BOARDS ({parsedData.boards.length})
+        ALL BOARDS ({data.boards.length})
       </Text>
-      {parsedData.boards.map((board: IBoard) => (
+      {data.boards.map((board: IBoard) => (
         <Link
           as={NextLink}
           color={board.slug === router.query.slug ? '#FFFFFF' : '#828FA3'}
@@ -40,6 +37,8 @@ export default function Navbar() {
           fontSize="sm"
           _hover={{
             textDecoration: 'none',
+            color: '#635FC7',
+            bgColor: '#E4EBFA',
           }}
         >
           <Flex alignItems="center" gap={3} ml={3}>

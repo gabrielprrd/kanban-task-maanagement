@@ -12,7 +12,7 @@ export default function Sidebar({ toggleSidebarVisibility }: Props) {
     <Flex
       display={{ base: 'none', sm: 'flex' }}
       w="200px"
-      h="100%"
+      h="90vh"
       bgColor={useColorModeValue('#FFFFFF', '#2B2C37')}
       borderRight=".5px solid"
       borderColor="#828FA3"
