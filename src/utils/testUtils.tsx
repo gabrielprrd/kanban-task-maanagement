@@ -7,12 +7,10 @@ interface WrapperProps {
   children: JSX.Element
 }
 
-const renderWithProviders = (ui: ReactElement) => {
+export const renderWithProviders = (ui: ReactElement) => {
   const Wrapper = ({ children }: WrapperProps) => (
     <ThemeProvider theme={theme}>{children}</ThemeProvider>
   )
 
   return render(ui, { wrapper: Wrapper })
 }
-
-export default renderWithProviders
