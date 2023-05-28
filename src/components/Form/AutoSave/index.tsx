@@ -10,8 +10,7 @@ export default function AutoSave({ debounceMs }: Props) {
   const formik = useFormikContext()
 
   const debouncedSubmit = useCallback(
-    () => debounce(() => formik.submitForm(), debounceMs),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    debounce(() => formik.submitForm(), debounceMs),
     [debounceMs, formik.submitForm]
   )
 

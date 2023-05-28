@@ -9,6 +9,7 @@ import {
   MenuItem,
   MenuList,
   Text,
+  Tooltip,
   useColorModeValue,
   useDisclosure,
 } from '@chakra-ui/react'
@@ -16,9 +17,53 @@ import AppLogo from '../AppLogo'
 import { FaEllipsisV, FaChevronDown } from 'react-icons/fa'
 import { AddIcon } from '@chakra-ui/icons'
 import MobileTopbarModal from '../MobileTopbarModal'
+import {
+  useBoardFormStore,
+  useConfirmActionModalStore,
+  useCurrentBoardStore,
+  useTaskFormStore,
+} from '@/hooks/index'
+import { api } from '@/utils/index'
+import { useRouter } from 'next/router'
 
 export default function Topbar() {
+  const router = useRouter()
   const { isOpen, onClose, onOpen } = useDisclosure()
+  const openTaskForm = useTaskFormStore(({ openTaskForm }) => openTaskForm)
+  const openEditBoardForm = useBoardFormStore(
+    ({ openEditBoardForm }) => openEditBoardForm
+  )
+  const board = useCurrentBoardStore(({ board }) => board)
+  const { refetch: refetchBoards } = api.board.getAll.useQuery(undefined, {
+    enabled: !board,
+  })
+  const { mutate: deleteBoard } = api.board.deleteById.useMutation({
+    onSuccess: async () => {
+      const updatedBoardList = await refetchBoards()
+      router.push('/board/' + updatedBoardList.data?.boards[0].id)
+    },
+  })
+
+  const {
+    setConfirmBtnLabel,
+    openConfirmActionModal,
+    setTitle,
+    setDescription,
+    setConfirmCallback,
+  } = useConfirmActionModalStore()
+
+  function handleDeleteBoard() {
+    // TODO?: abstract this logic to a hook
+    setConfirmBtnLabel('Delete')
+    setTitle('Delete this board?')
+    setDescription(
+      `Are you sure you want to delete the '${board?.name}' board? This action will remove all columns and tasks and cannot be reversed.`
+    )
+    setConfirmCallback(() => {
+      if (board?.id) deleteBoard({ id: board?.id })
+    })
+    openConfirmActionModal()
+  }
 
   return (
     <>
@@ -32,7 +77,7 @@ export default function Topbar() {
       >
         <Flex gap={{ base: 2, sm: 10 }} align="center">
           <AppLogo />
-          <Heading>Platform Launch</Heading>
+          <Heading>{board?.name}</Heading>
           <IconButton
             aria-label="Show navbar"
             display={{ sm: 'none' }}
@@ -43,10 +88,23 @@ export default function Topbar() {
           />
         </Flex>
         <Flex gap={1} align="center">
-          <Button variant="primary" gap={1}>
-            <AddIcon boxSize={2} />
-            <Text display={{ base: 'none', sm: 'inline' }}>Add New Task</Text>
-          </Button>
+          <Tooltip
+            hasArrow
+            label="At least one column is required"
+            isOpen={!board?.columns.length}
+            borderRadius="md"
+          >
+            <Button
+              variant="primary"
+              gap={1}
+              onClick={openTaskForm}
+              isDisabled={!board?.columns.length}
+            >
+              <AddIcon boxSize={2} />
+              <Text display={{ base: 'none', sm: 'inline' }}>Add New Task</Text>
+            </Button>
+          </Tooltip>
+
           <Menu>
             <MenuButton
               as={IconButton}
@@ -60,8 +118,12 @@ export default function Topbar() {
               Actions
             </MenuButton>
             <MenuList boxShadow="none" border="none">
-              <MenuItem color="#828FA3">Edit Board</MenuItem>
-              <MenuItem color="#EA5555">Delete Board</MenuItem>
+              <MenuItem color="#828FA3" onClick={openEditBoardForm}>
+                Edit Board
+              </MenuItem>
+              <MenuItem color="#EA5555" onClick={handleDeleteBoard}>
+                Delete Board
+              </MenuItem>
             </MenuList>
           </Menu>
         </Flex>

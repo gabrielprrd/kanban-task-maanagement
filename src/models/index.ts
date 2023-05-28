@@ -1,1 +1,13 @@
-export type { IBoard, IColumn, ITask, ISubtask } from './board'
+export {
+  Board,
+  CreateOrUpdateBoard,
+  Column,
+  CreateOrUpdateColumn,
+  BoardFormValidation,
+  Task,
+  TaskFormValidation,
+  CreateOrUpdateSubtask,
+  CreateOrUpdateTask,
+  Subtask,
+} from './board'
+export type { BoardType, ColumnType, TaskType, SubtaskType } from './board'

@@ -28,6 +28,14 @@ export const boardRouter = router({
             orderBy: {
               order: 'asc',
             },
+            include: {
+              tasks: {
+                include: {
+                  subtasks: true,
+                  column: true,
+                },
+              },
+            },
           },
         },
       })

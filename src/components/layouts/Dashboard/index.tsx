@@ -3,6 +3,9 @@ import { ReactElement, useState } from 'react'
 import DesktopToggleSidebarButton from './DesktopToggleSidebarButton'
 import Topbar from './Topbar'
 import Sidebar from './Sidebar'
+import TaskFormModal from '@/components/TaskFormModal/index'
+import ConfirmActionModal from '@/components/ConfirmActionModal'
+import BoardFormModal from '@/components/BoardFormModal'
 
 interface Props {
   children: ReactElement
@@ -50,6 +53,9 @@ export default function DashboardLayout({ children }: Props) {
         isSidebarHidden={isSidebarHidden}
         toggleSidebarVisibility={toggleSidebarVisibility}
       />
+      <TaskFormModal />
+      <BoardFormModal />
+      <ConfirmActionModal />
     </>
   )
 }

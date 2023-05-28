@@ -7,7 +7,7 @@ const components = {
   Button,
   Heading,
   Text,
-  Switch
+  Switch,
 }
 
 export default components
