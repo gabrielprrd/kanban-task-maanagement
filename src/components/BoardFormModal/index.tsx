@@ -10,33 +10,51 @@ import {
   Text,
   useColorModeValue,
   IconButton,
+  FormErrorMessage,
 } from '@chakra-ui/react'
-import { Formik, Form, FieldArray, Field, FieldProps } from 'formik'
+import {
+  Formik,
+  Form,
+  FieldArray,
+  Field,
+  FieldProps,
+  FormikProps,
+} from 'formik'
 import { AddIcon } from '@chakra-ui/icons'
 import IconCross from '@/public/icons/icon-cross.svg'
-import { BoardFormValidation } from '@/models/index'
+import { BoardFormValidation, ColumnType } from '@/models/index'
 import { toFormikValidationSchema } from 'zod-formik-adapter'
-import { useBoardFormStore, useCurrentBoardStore } from '@/hooks/index'
+import {
+  useBoardFormStore,
+  useCurrentBoardStore,
+  useErrorToast,
+} from '@/hooks/index'
 import { api } from '@/utils/index'
 import { useRouter } from 'next/router'
 import FieldArrayErrorMessage from '@/components/Form/FieldArrayErrorMessage'
-import FieldWrapper from '@/components/Form/Input'
+import { useRef } from 'react'
+
+interface FormValues {
+  name: string
+  columns: ColumnType[]
+}
 
 export default function BoardFormModal() {
+  const formRef = useRef<FormikProps<FormValues>>(null)
   const router = useRouter()
+  const utils = api.useContext()
+  const { errorToast } = useErrorToast()
   const currentBoard = useCurrentBoardStore(({ board }) => board)
   const { isBoardFormOpen, closeBoardForm, formMode } = useBoardFormStore()
-  const { refetch: refetchBoards } = api.board.getAll.useQuery()
-  const { mutateAsync: createOrUpdateBoard } =
+  const { mutateAsync: createOrUpdateBoard, isLoading } =
     api.board.createOrUpdate.useMutation({
       onSuccess: async (data) => {
-        const newBoardList = await refetchBoards()
-        const boardToRedirect = newBoardList.data?.boards.find(
-          (b) => b.id === data.id
-        )
-        if (boardToRedirect) router.push(boardToRedirect.id)
-        return data
+        utils.board.invalidate()
+        router.push(data.id)
+        formRef.current?.resetForm()
+        closeBoardForm()
       },
+      onError: () => errorToast(),
     })
 
   const board = formMode === 'create' ? null : currentBoard
@@ -69,33 +87,44 @@ export default function BoardFormModal() {
           <Formik
             initialValues={initialValues}
             validationSchema={toFormikValidationSchema(BoardFormValidation)}
-            onSubmit={async (values, { setSubmitting, resetForm }) => {
+            innerRef={formRef}
+            onSubmit={async (values) => {
               const columnsWithUpdatedOrder = values.columns.map(
                 (col, index) => ({
                   ...col,
                   order: index,
                 })
               )
-
-              try {
-                await createOrUpdateBoard({
-                  ...values,
-                  id: board?.id ?? undefined,
-                  columns: columnsWithUpdatedOrder,
-                })
-                setSubmitting(false)
-                resetForm()
-                closeBoardForm()
-              } catch (err) {
-                setSubmitting(false)
-              }
+              await createOrUpdateBoard({
+                ...values,
+                id: board?.id ?? undefined,
+                columns: columnsWithUpdatedOrder,
+              })
             }}
           >
-            {({ values, isSubmitting, handleChange, handleBlur }) => (
+            {({ values, handleChange, handleBlur, errors }) => (
               <Form autoComplete="off">
                 <Flex direction="column" gap={2}>
                   <Flex direction="column" gap={5}>
-                    <FieldWrapper name="name" label="Name" />
+                    <Field name="name" id="name">
+                      {({ field, form }: FieldProps) => (
+                        <FormControl
+                          isInvalid={!!form.errors.name && !!form.touched.name}
+                        >
+                          <FormLabel
+                            htmlFor="name"
+                            color="#828FA3"
+                            fontSize="small"
+                          >
+                            Name
+                          </FormLabel>
+                          <Input {...field} focusBorderColor="#635FC7" />
+                          <FormErrorMessage>
+                            {form.errors.description as string}
+                          </FormErrorMessage>
+                        </FormControl>
+                      )}
+                    </Field>
 
                     <Flex direction="column" gap={1}>
                       <FormLabel
@@ -157,7 +186,7 @@ export default function BoardFormModal() {
                             <Button
                               variant="secondary"
                               gap={1}
-                              isDisabled={isSubmitting}
+                              isDisabled={isLoading}
                               onClick={() => push({ name: '' })}
                             >
                               <AddIcon boxSize={2} />
@@ -172,9 +201,10 @@ export default function BoardFormModal() {
                     variant="primary"
                     width="100%"
                     type="submit"
-                    isDisabled={isSubmitting}
+                    isDisabled={isLoading}
+                    onClick={() => console.log('ERRORS: ', errors)}
                   >
-                    {isSubmitting ? 'Loading...' : submitButtonText}
+                    {isLoading ? 'Loading...' : submitButtonText}
                   </Button>
                 </Flex>
               </Form>

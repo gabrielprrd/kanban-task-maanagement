@@ -21,6 +21,7 @@ import {
   useBoardFormStore,
   useConfirmActionModalStore,
   useCurrentBoardStore,
+  useErrorToast,
   useTaskFormStore,
 } from '@/hooks/index'
 import { api } from '@/utils/index'
@@ -28,20 +29,20 @@ import { useRouter } from 'next/router'
 
 export default function Topbar() {
   const router = useRouter()
+  const { errorToast } = useErrorToast()
   const { isOpen, onClose, onOpen } = useDisclosure()
   const openTaskForm = useTaskFormStore(({ openTaskForm }) => openTaskForm)
   const openEditBoardForm = useBoardFormStore(
     ({ openEditBoardForm }) => openEditBoardForm
   )
   const board = useCurrentBoardStore(({ board }) => board)
-  const { refetch: refetchBoards } = api.board.getAll.useQuery(undefined, {
-    enabled: !board,
-  })
+  const { refetch: refetchBoards } = api.board.getAll.useQuery()
   const { mutate: deleteBoard } = api.board.deleteById.useMutation({
     onSuccess: async () => {
       const updatedBoardList = await refetchBoards()
       router.push('/board/' + updatedBoardList.data?.boards[0].id)
     },
+    onError: () => errorToast(),
   })
 
   const {
@@ -53,14 +54,13 @@ export default function Topbar() {
   } = useConfirmActionModalStore()
 
   function handleDeleteBoard() {
-    // TODO?: abstract this logic to a hook
     setConfirmBtnLabel('Delete')
     setTitle('Delete this board?')
     setDescription(
       `Are you sure you want to delete the '${board?.name}' board? This action will remove all columns and tasks and cannot be reversed.`
     )
     setConfirmCallback(() => {
-      if (board?.id) deleteBoard({ id: board?.id })
+      if (board?.id) deleteBoard(board?.id)
     })
     openConfirmActionModal()
   }
@@ -88,44 +88,50 @@ export default function Topbar() {
           />
         </Flex>
         <Flex gap={1} align="center">
-          <Tooltip
-            hasArrow
-            label="At least one column is required"
-            isOpen={!board?.columns.length}
-            borderRadius="md"
-          >
-            <Button
-              variant="primary"
-              gap={1}
-              onClick={openTaskForm}
-              isDisabled={!board?.columns.length}
-            >
-              <AddIcon boxSize={2} />
-              <Text display={{ base: 'none', sm: 'inline' }}>Add New Task</Text>
-            </Button>
-          </Tooltip>
+          {board && (
+            <>
+              <Tooltip
+                hasArrow
+                label="At least one column is required"
+                isOpen={!board?.columns?.length}
+                borderRadius="md"
+              >
+                <Button
+                  variant="primary"
+                  gap={1}
+                  onClick={openTaskForm}
+                  isDisabled={!board?.columns?.length}
+                >
+                  <AddIcon boxSize={2} />
+                  <Text display={{ base: 'none', sm: 'inline' }}>
+                    Add New Task
+                  </Text>
+                </Button>
+              </Tooltip>
 
-          <Menu>
-            <MenuButton
-              as={IconButton}
-              icon={<FaEllipsisV />}
-              bgColor="transparent"
-              aria-label="Board options"
-              color="#828FA3"
-              _hover={{ bgColor: 'transparent' }}
-              _expanded={{ bgColor: 'transparent' }}
-            >
-              Actions
-            </MenuButton>
-            <MenuList boxShadow="none" border="none">
-              <MenuItem color="#828FA3" onClick={openEditBoardForm}>
-                Edit Board
-              </MenuItem>
-              <MenuItem color="#EA5555" onClick={handleDeleteBoard}>
-                Delete Board
-              </MenuItem>
-            </MenuList>
-          </Menu>
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  icon={<FaEllipsisV />}
+                  bgColor="transparent"
+                  aria-label="Board options"
+                  color="#828FA3"
+                  _hover={{ bgColor: 'transparent' }}
+                  _expanded={{ bgColor: 'transparent' }}
+                >
+                  Actions
+                </MenuButton>
+                <MenuList boxShadow="none" border="none">
+                  <MenuItem color="#828FA3" onClick={openEditBoardForm}>
+                    Edit Board
+                  </MenuItem>
+                  <MenuItem color="#EA5555" onClick={handleDeleteBoard}>
+                    Delete Board
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </>
+          )}
         </Flex>
       </HStack>
       <MobileTopbarModal isOpen={isOpen} onClose={onClose} />

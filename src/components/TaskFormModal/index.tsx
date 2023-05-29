@@ -18,33 +18,52 @@ import {
   useCurrentTaskStore,
   useCurrentBoardStore,
   useTaskFormStore,
+  useErrorToast,
 } from '@/hooks/index'
-import { Formik, Form, FieldArray, Field, FieldProps } from 'formik'
+import {
+  Formik,
+  Form,
+  FieldArray,
+  Field,
+  FieldProps,
+  FormikProps,
+} from 'formik'
 import { AddIcon } from '@chakra-ui/icons'
 import IconCross from '@/public/icons/icon-cross.svg'
 import { toFormikValidationSchema } from 'zod-formik-adapter'
 import FieldArrayErrorMessage from '@/components/Form/FieldArrayErrorMessage'
-import { TaskFormValidation } from '@/models/index'
+import { SubtaskType, TaskFormValidation } from '@/models/index'
 import { api } from '@/utils/index'
-import { useRouter } from 'next/router'
-import FieldWrapper from '../Form/Input'
+import { useRef } from 'react'
+
+interface FormValues {
+  title: string
+  description: string
+  subtasks:
+    | SubtaskType[]
+    | {
+        title: string
+        isComplete: boolean
+      }[]
+  column: string | null | undefined
+}
 
 export default function TaskFormModal() {
-  const router = useRouter()
+  const formRef = useRef<FormikProps<FormValues>>(null)
+  const utils = api.useContext()
+  const { errorToast } = useErrorToast()
   const { isTaskFormOpen, closeTaskForm, formMode } = useTaskFormStore()
   const currentTask = useCurrentTaskStore(({ task }) => task)
   const board = useCurrentBoardStore(({ board }) => board)
-  const { refetch: refetchBoards } = api.board.getAll.useQuery()
-  const { mutateAsync: createOrUpdateTask } =
+  const { mutateAsync: createOrUpdateTask, isLoading } =
     api.task.createOrUpdate.useMutation({
-      onSuccess: async (data) => {
-        const newBoardList = await refetchBoards()
-        const boardToRedirect = newBoardList.data?.boards.find(
-          (b) => b.id === data.id
-        )
-        if (boardToRedirect) router.push(boardToRedirect.id)
-        return data
+      onSuccess: () => {
+        utils.board.getById.invalidate()
+        utils.board.invalidate()
+        formRef.current?.resetForm()
+        closeTaskForm()
       },
+      onError: () => errorToast(),
     })
 
   const task = formMode === 'create' ? null : currentTask
@@ -90,7 +109,7 @@ export default function TaskFormModal() {
           <Formik
             initialValues={initialValues}
             validationSchema={toFormikValidationSchema(TaskFormValidation)}
-            onSubmit={async (values, { setSubmitting, resetForm }) => {
+            onSubmit={async (values) => {
               const subtasksWithUpdatedOrder = values.subtasks.map(
                 (sub, index) => ({
                   ...sub,
@@ -98,29 +117,18 @@ export default function TaskFormModal() {
                 })
               )
 
-              const payload = {
+              await createOrUpdateTask({
                 ...values,
                 id: task?.id ?? undefined,
                 order: task?.order ?? task?.column.tasks?.length ?? 0,
                 subtasks: subtasksWithUpdatedOrder,
-              }
-
-              try {
-                await createOrUpdateTask(payload)
-                setSubmitting(false)
-                resetForm()
-                closeTaskForm()
-                router.reload()
-              } catch (err) {
-                setSubmitting(false)
-                // TODO: give feedback to user
-              }
+              })
             }}
           >
-            {({ values, isSubmitting, errors, handleChange, handleBlur }) => (
+            {({ values, errors, handleChange, handleBlur }) => (
               <Form autoComplete="off">
                 <Flex direction="column" gap={5}>
-                  {/* <Field name="title" id="title">
+                  <Field name="title" id="title">
                     {({ field, form }: FieldProps) => (
                       <FormControl
                         isInvalid={!!form.errors.title && !!form.touched.title}
@@ -142,12 +150,7 @@ export default function TaskFormModal() {
                         </FormErrorMessage>
                       </FormControl>
                     )}
-                  </Field> */}
-                  <FieldWrapper
-                    name="title"
-                    label="Title"
-                    placeholder="e.g Take coffee break"
-                  />
+                  </Field>
 
                   <Field name="description" id="description">
                     {({ field, form }: FieldProps) => (
@@ -228,7 +231,7 @@ export default function TaskFormModal() {
                           <Button
                             variant="secondary"
                             gap={1}
-                            isDisabled={isSubmitting}
+                            isDisabled={isLoading}
                             onClick={() => push({ ...initialSubtaskValue })}
                           >
                             <AddIcon boxSize={2} />
@@ -268,9 +271,9 @@ export default function TaskFormModal() {
                         variant="primary"
                         width="100%"
                         type="submit"
-                        isDisabled={isSubmitting}
+                        isDisabled={isLoading}
                       >
-                        {isSubmitting ? 'Loading...' : submitButtonText}
+                        {isLoading ? 'Loading...' : submitButtonText}
                       </Button>
                     </>
                   )}

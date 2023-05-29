@@ -2,29 +2,24 @@ import { z } from 'zod'
 import { procedure, router } from '../trpc'
 import { CreateOrUpdateTask } from '@/models/index'
 
-const objectWithIdValidator = z.object({
-  id: z.string().uuid().optional(),
-})
+const uuid = z.string().uuid().optional()
 
 export const taskRouter = router({
-  getById: procedure
-    .input(objectWithIdValidator)
-    .query(async ({ input, ctx }) => {
-      return await ctx.dbClient.task.findUnique({
-        where: {
-          id: input.id,
-        },
-        include: {
-          subtasks: true,
-          column: true,
-        },
-      })
-    }),
+  getById: procedure.input(uuid).query(async ({ input, ctx }) => {
+    return await ctx.dbClient.task.findUnique({
+      where: {
+        id: input,
+      },
+      include: {
+        subtasks: true,
+        column: true,
+      },
+    })
+  }),
 
   createOrUpdate: procedure
     .input(CreateOrUpdateTask)
     .mutation(async ({ input, ctx }) => {
-      console.log('=== TASK INPUT: ', input)
       return await ctx.dbClient.task.upsert({
         create: {
           title: input.title,
@@ -67,17 +62,16 @@ export const taskRouter = router({
         },
         include: {
           subtasks: true,
+          column: true,
         },
       })
     }),
 
-  deleteById: procedure
-    .input(objectWithIdValidator)
-    .mutation(async ({ input, ctx }) => {
-      return await ctx.dbClient.task.delete({
-        where: {
-          id: input.id,
-        },
-      })
-    }),
+  deleteById: procedure.input(uuid).mutation(async ({ input, ctx }) => {
+    return await ctx.dbClient.task.delete({
+      where: {
+        id: input,
+      },
+    })
+  }),
 })

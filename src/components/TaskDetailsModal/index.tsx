@@ -2,6 +2,7 @@ import {
   useConfirmActionModalStore,
   useCurrentBoardStore,
   useCurrentTaskStore,
+  useErrorToast,
   useTaskFormStore,
 } from '@/hooks/index'
 import {
@@ -25,7 +26,6 @@ import { FaEllipsisV } from 'react-icons/fa'
 import { Form, Formik, Field, FieldArray } from 'formik'
 import { api } from '@/utils/index'
 import AutoSave from '@/components/Form/AutoSave'
-import { useRouter } from 'next/router'
 
 interface Props {
   isOpen: boolean
@@ -33,7 +33,8 @@ interface Props {
 }
 
 export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
-  const router = useRouter()
+  const utils = api.useContext()
+  const { errorToast } = useErrorToast()
   const {
     setConfirmBtnLabel,
     openConfirmActionModal,
@@ -44,21 +45,20 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
   const board = useCurrentBoardStore(({ board }) => board)
   const { openEditTaskForm } = useTaskFormStore()
   const { task, setTask } = useCurrentTaskStore()
-  const { refetch: refetchTask } = api.task.getById.useQuery({ id: task?.id })
   const { mutateAsync: deleteTask } = api.task.deleteById.useMutation({
     onSuccess: () => {
       closeModal()
-      router.reload()
+      utils.board.getById.invalidate()
     },
+    onError: () => errorToast(),
   })
   const { mutateAsync: createOrUpdateTask } =
     api.task.createOrUpdate.useMutation({
       onSuccess: async (data) => {
-        refetchTask()
+        utils.board.getById.invalidate()
+        setTask(data)
       },
-      onError: async (err) => {
-        // TODO: error feedback to user
-      },
+      onError: () => errorToast(),
     })
 
   const checkboxBgColor = useColorModeValue('#F4F7FD', '#20212C')
@@ -71,14 +71,13 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
   ).length
 
   function handleDeleteTask() {
-    // TODO?: abstract this logic to a hook
     setConfirmBtnLabel('Delete')
     setTitle('Delete this task?')
     setDescription(
       `Are you sure you want to delete the '${task?.title}' task? This action will remove all columns and tasks and cannot be reversed.`
     )
     setConfirmCallback(() => {
-      if (task?.id) deleteTask({ id: task?.id })
+      if (task?.id) deleteTask(task?.id)
     })
     openConfirmActionModal()
   }
@@ -139,28 +138,21 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
               subtasks: task?.subtasks,
               column: task?.column.id,
             }}
-            onSubmit={async (values, { setSubmitting }) => {
-              const subtasksWithUpdatedOrder = values.subtasks.map(
+            onSubmit={async (values) => {
+              const subtasksWithUpdatedOrder = values.subtasks?.map(
                 (sub, index) => ({
                   ...sub,
                   order: index,
                 })
               )
 
-              const payload = {
+              await createOrUpdateTask({
                 ...task,
                 ...values,
                 id: task?.id ?? undefined,
                 order: task?.order ?? task?.column.tasks?.length ?? 0,
                 subtasks: subtasksWithUpdatedOrder,
-              }
-              try {
-                await createOrUpdateTask(payload)
-                setSubmitting(false)
-              } catch (err) {
-                setSubmitting(false)
-                // TODO: give feedback to user
-              }
+              })
             }}
           >
             {({ values }) => (
@@ -179,7 +171,7 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
                       <FieldArray name="subtasks">
                         {({ replace }) => (
                           <Stack>
-                            {values.subtasks.map((sub, index) => (
+                            {values.subtasks?.map((sub, index) => (
                               <Field
                                 as={Checkbox}
                                 type="checkbox"
@@ -235,7 +227,7 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
                       Current column
                     </FormLabel>
                     <Field as={Select} name="column" focusBorderColor="#635FC7">
-                      {board?.columns.map((col, index) => (
+                      {board?.columns?.map((col, index) => (
                         <option
                           value={col.id}
                           key={'taskDetailsModalColumnsKey' + col.id + index}

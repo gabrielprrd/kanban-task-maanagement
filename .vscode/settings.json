@@ -8,7 +8,15 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": true
   },
-  "cSpell.words": ["formik", "superjson", "TRPC", "uuidv", "zustand"],
+  "cSpell.words": [
+    "formik",
+    "Kanban",
+    "superjson",
+    "Topbar",
+    "TRPC",
+    "uuidv",
+    "zustand"
+  ],
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib"
 }
