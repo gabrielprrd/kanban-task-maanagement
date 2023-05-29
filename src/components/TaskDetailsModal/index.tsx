@@ -26,6 +26,7 @@ import { FaEllipsisV } from 'react-icons/fa'
 import { Form, Formik, Field, FieldArray } from 'formik'
 import { api } from '@/utils/index'
 import AutoSave from '@/components/Form/AutoSave'
+import { useEffect } from 'react'
 
 interface Props {
   isOpen: boolean
@@ -86,6 +87,10 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
     setTask(task)
     openEditTaskForm()
   }
+
+  useEffect(() => {
+    console.log('TASK: ', task)
+  }, [task])
 
   return (
     <Modal
@@ -175,6 +180,7 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
                               <Field
                                 as={Checkbox}
                                 type="checkbox"
+                                id={sub.id}
                                 key={
                                   'taskDetailsModalSubtasksOptions' +
                                   sub.id +
@@ -226,7 +232,12 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
                     >
                       Current column
                     </FormLabel>
-                    <Field as={Select} name="column" focusBorderColor="#635FC7">
+                    <Field
+                      as={Select}
+                      name="column"
+                      id="column"
+                      focusBorderColor="#635FC7"
+                    >
                       {board?.columns?.map((col, index) => (
                         <option
                           value={col.id}

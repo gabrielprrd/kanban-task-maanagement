@@ -95,11 +95,15 @@ export default function BoardFormModal() {
                   order: index,
                 })
               )
-              await createOrUpdateBoard({
+
+              const payload = {
                 ...values,
                 id: board?.id ?? undefined,
                 columns: columnsWithUpdatedOrder,
-              })
+              }
+
+              console.log('PAYLOAD: ', payload)
+              await createOrUpdateBoard(payload)
             }}
           >
             {({ values, handleChange, handleBlur, errors }) => (
@@ -164,6 +168,7 @@ export default function BoardFormModal() {
                                           <Input
                                             {...field}
                                             focusBorderColor="#635FC7"
+                                            id={col.id}
                                           />
                                           <IconButton
                                             bgColor="transparent"

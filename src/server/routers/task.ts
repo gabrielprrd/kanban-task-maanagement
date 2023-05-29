@@ -49,8 +49,15 @@ export const taskRouter = router({
               },
               update: sub,
             })),
+            // connectOrCreate: input.subtasks?.map((sub) => ({
+            //   where: {
+            //     id: sub.id || '',
+            //   },
+            //   create: sub,
+            // })),
+
             deleteMany: {
-              taskId: input.id,
+              taskId: input.id || '',
               NOT: input.subtasks?.map((sub) => ({ id: sub.id })),
             },
           },

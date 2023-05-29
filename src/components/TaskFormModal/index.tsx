@@ -34,7 +34,7 @@ import { toFormikValidationSchema } from 'zod-formik-adapter'
 import FieldArrayErrorMessage from '@/components/Form/FieldArrayErrorMessage'
 import { SubtaskType, TaskFormValidation } from '@/models/index'
 import { api } from '@/utils/index'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface FormValues {
   title: string
@@ -53,13 +53,15 @@ export default function TaskFormModal() {
   const utils = api.useContext()
   const { errorToast } = useErrorToast()
   const { isTaskFormOpen, closeTaskForm, formMode } = useTaskFormStore()
-  const currentTask = useCurrentTaskStore(({ task }) => task)
+  const { task: currentTask, setTask: setCurrentTask } = useCurrentTaskStore()
   const board = useCurrentBoardStore(({ board }) => board)
   const { mutateAsync: createOrUpdateTask, isLoading } =
     api.task.createOrUpdate.useMutation({
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log(data)
         utils.board.getById.invalidate()
         utils.board.invalidate()
+        setCurrentTask(data)
         formRef.current?.resetForm()
         closeTaskForm()
       },
@@ -86,8 +88,14 @@ export default function TaskFormModal() {
       { ...initialSubtaskValue },
     ],
     column:
-      task?.column.id ?? board?.columns?.length ? board?.columns[0].id : null,
+      task?.column.id ?? board?.columns?.length > 0
+        ? board?.columns[0].id
+        : null,
   }
+
+  useEffect(() => {
+    console.log('TASK: ', currentTask)
+  }, [currentTask])
 
   return (
     <Modal
@@ -205,6 +213,7 @@ export default function TaskFormModal() {
                                     <Field
                                       as={Input}
                                       name={`subtasks[${index}].title`}
+                                      id={sub.title + index}
                                       focusBorderColor="#635FC7"
                                       value={sub.title}
                                       onChange={handleChange}

@@ -1,20 +1,34 @@
-import { Flex, Text, Link, Button } from '@chakra-ui/react'
+import { Flex, Text, Link, Button, Center } from '@chakra-ui/react'
 import IconBoard from '@/public/icons/icon-board.svg'
 import { AddIcon } from '@chakra-ui/icons'
 import NextLink from 'next/link'
 import { useRouter } from 'next/router'
 import { api } from '@/utils/index'
-import { useBoardFormStore } from '@/hooks/index'
+import { useBoardFormStore, useErrorToast } from '@/hooks/index'
+import Spinner from '@/components/Spinner'
 
 export default function Navbar() {
-  const { data, error, isLoading } = api.board.getAll.useQuery()
+  const { errorToast } = useErrorToast()
+  const { data, error, isLoading } = api.board.getAll.useQuery(undefined, {
+    onError: () =>
+      errorToast({
+        title: 'Error',
+        description: 'Could not get boards from server',
+      }),
+  })
   const router = useRouter()
   const openCreateBoardForm = useBoardFormStore(
     ({ openCreateBoardForm }) => openCreateBoardForm
   )
 
-  if (error) return <div>Failed to load</div>
-  if (isLoading) return <div>Loading...</div>
+  if (error) return <></>
+
+  if (isLoading)
+    return (
+      <Center h="100%" w="100%">
+        <Spinner />
+      </Center>
+    )
 
   return (
     <Flex direction="column" px={2}>
