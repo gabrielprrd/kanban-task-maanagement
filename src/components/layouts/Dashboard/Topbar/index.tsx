@@ -21,6 +21,7 @@ import {
   useBoardFormStore,
   useConfirmActionModalStore,
   useCurrentBoardStore,
+  useCurrentTaskStore,
   useErrorToast,
   useTaskFormStore,
 } from '@/hooks/index'
@@ -31,6 +32,7 @@ export default function Topbar() {
   const router = useRouter()
   const { errorToast } = useErrorToast()
   const { isOpen, onClose, onOpen } = useDisclosure()
+  const setTask = useCurrentTaskStore(({ setTask }) => setTask)
   const openTaskForm = useTaskFormStore(({ openTaskForm }) => openTaskForm)
   const openEditBoardForm = useBoardFormStore(
     ({ openEditBoardForm }) => openEditBoardForm
@@ -63,6 +65,11 @@ export default function Topbar() {
       if (board?.id) deleteBoard(board?.id)
     })
     openConfirmActionModal()
+  }
+
+  function openNewTaskFormModal() {
+    setTask(null)
+    openTaskForm()
   }
 
   return (
@@ -99,7 +106,7 @@ export default function Topbar() {
                 <Button
                   variant="primary"
                   gap={1}
-                  onClick={openTaskForm}
+                  onClick={openNewTaskFormModal}
                   isDisabled={!board?.columns?.length}
                 >
                   <AddIcon boxSize={2} />

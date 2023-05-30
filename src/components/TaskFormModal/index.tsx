@@ -58,8 +58,6 @@ export default function TaskFormModal() {
   const { mutateAsync: createOrUpdateTask, isLoading } =
     api.task.createOrUpdate.useMutation({
       onSuccess: (data) => {
-        console.log(data)
-        utils.board.getById.invalidate()
         utils.board.invalidate()
         setCurrentTask(data)
         formRef.current?.resetForm()
@@ -88,14 +86,8 @@ export default function TaskFormModal() {
       { ...initialSubtaskValue },
     ],
     column:
-      task?.column.id ?? board?.columns?.length > 0
-        ? board?.columns[0].id
-        : null,
+      task?.column.id ?? (board?.columns?.length ? board.columns[0].id : ''),
   }
-
-  useEffect(() => {
-    console.log('TASK: ', currentTask)
-  }, [currentTask])
 
   return (
     <Modal
@@ -125,12 +117,14 @@ export default function TaskFormModal() {
                 })
               )
 
-              await createOrUpdateTask({
+              console.log(subtasksWithUpdatedOrder)
+              const payload = {
                 ...values,
                 id: task?.id ?? undefined,
                 order: task?.order ?? task?.column.tasks?.length ?? 0,
                 subtasks: subtasksWithUpdatedOrder,
-              })
+              }
+              await createOrUpdateTask(payload)
             }}
           >
             {({ values, errors, handleChange, handleBlur }) => (
@@ -241,7 +235,12 @@ export default function TaskFormModal() {
                             variant="secondary"
                             gap={1}
                             isDisabled={isLoading}
-                            onClick={() => push({ ...initialSubtaskValue })}
+                            onClick={() =>
+                              push({
+                                ...initialSubtaskValue,
+                                order: values.subtasks.length,
+                              })
+                            }
                           >
                             <AddIcon boxSize={2} />
                             <Text>Add New Subtask</Text>

@@ -57,7 +57,6 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
     api.task.createOrUpdate.useMutation({
       onSuccess: async (data) => {
         utils.board.getById.invalidate()
-        setTask(data)
       },
       onError: () => errorToast(),
     })
@@ -87,10 +86,6 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
     setTask(task)
     openEditTaskForm()
   }
-
-  useEffect(() => {
-    console.log('TASK: ', task)
-  }, [task])
 
   return (
     <Modal
@@ -143,6 +138,7 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
               subtasks: task?.subtasks,
               column: task?.column.id,
             }}
+            enableReinitialize
             onSubmit={async (values) => {
               const subtasksWithUpdatedOrder = values.subtasks?.map(
                 (sub, index) => ({

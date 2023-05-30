@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-
 interface TaskFormStore {
   isTaskFormOpen: boolean
   openTaskForm: () => void

@@ -93,8 +93,11 @@ export default function BoardFormModal() {
                 (col, index) => ({
                   ...col,
                   order: index,
+                  tasks: !!col.tasks?.length ? col.tasks : undefined,
                 })
               )
+
+              console.log('columns: ', columnsWithUpdatedOrder)
 
               const payload = {
                 ...values,
@@ -102,7 +105,7 @@ export default function BoardFormModal() {
                 columns: columnsWithUpdatedOrder,
               }
 
-              console.log('PAYLOAD: ', payload)
+              console.log('BoardformModal payload: ', payload)
               await createOrUpdateBoard(payload)
             }}
           >
@@ -207,7 +210,6 @@ export default function BoardFormModal() {
                     width="100%"
                     type="submit"
                     isDisabled={isLoading}
-                    onClick={() => console.log('ERRORS: ', errors)}
                   >
                     {isLoading ? 'Loading...' : submitButtonText}
                   </Button>

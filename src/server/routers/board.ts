@@ -34,7 +34,11 @@ export const boardRouter = router({
           include: {
             tasks: {
               include: {
-                subtasks: true,
+                subtasks: {
+                  orderBy: {
+                    order: 'asc',
+                  },
+                },
                 column: true,
               },
             },
@@ -47,32 +51,31 @@ export const boardRouter = router({
   createOrUpdate: procedure
     .input(CreateOrUpdateBoard)
     .mutation(async ({ input, ctx }) => {
-      console.log('query input: ', input)
-
+      console.log('BOARD INPUT: ', input)
       return await ctx.dbClient.board.upsert({
+        where: {
+          id: input.id || '',
+        },
         create: {
           name: input.name,
           columns: {
             create: input.columns,
           },
         },
-        where: {
-          id: input.id || '',
-        },
         update: {
           name: input.name,
           columns: {
-            upsert: input.columns?.map((col) => ({
-              create: col, // This "create" doesn't work for now
-              where: {
-                id: col.id || '',
-              },
-              update: col,
-            })),
             deleteMany: {
               boardId: input.id,
               NOT: input.columns?.map((col) => ({ id: col.id })),
             },
+            upsert: input.columns?.map((col) => ({
+              where: {
+                id: col.id || '',
+              },
+              create: col,
+              update: col,
+            })),
           },
         },
         include: {

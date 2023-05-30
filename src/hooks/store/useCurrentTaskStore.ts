@@ -3,7 +3,7 @@ import { create } from 'zustand'
 
 interface CurrentTaskStore {
   task: TaskType | null
-  setTask: (task: TaskType | null) => void
+  setTask: (task: TaskType) => void
 }
 
 export const useCurrentTaskStore = create<CurrentTaskStore>((set) => ({

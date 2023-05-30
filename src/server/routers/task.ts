@@ -11,7 +11,11 @@ export const taskRouter = router({
         id: input,
       },
       include: {
-        subtasks: true,
+        subtasks: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
         column: true,
       },
     })
@@ -41,25 +45,19 @@ export const taskRouter = router({
           title: input.title,
           description: input.description,
           order: input.order,
+          subtasks: input.subtasks,
           subtasks: {
+            deleteMany: {
+              taskId: input.id || '',
+              NOT: input.subtasks?.map((sub) => ({ id: sub.id })),
+            },
             upsert: input.subtasks?.map((sub) => ({
-              create: sub, // This "create" doesn't work for now
+              create: sub,
               where: {
                 id: sub.id || '',
               },
               update: sub,
             })),
-            // connectOrCreate: input.subtasks?.map((sub) => ({
-            //   where: {
-            //     id: sub.id || '',
-            //   },
-            //   create: sub,
-            // })),
-
-            deleteMany: {
-              taskId: input.id || '',
-              NOT: input.subtasks?.map((sub) => ({ id: sub.id })),
-            },
           },
           column: {
             connect: {
@@ -68,7 +66,11 @@ export const taskRouter = router({
           },
         },
         include: {
-          subtasks: true,
+          subtasks: {
+            orderBy: {
+              order: 'asc',
+            },
+          },
           column: true,
         },
       })
