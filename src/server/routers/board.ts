@@ -51,7 +51,6 @@ export const boardRouter = router({
   createOrUpdate: procedure
     .input(CreateOrUpdateBoard)
     .mutation(async ({ input, ctx }) => {
-      console.log('BOARD INPUT: ', input)
       return await ctx.dbClient.board.upsert({
         where: {
           id: input.id || '',

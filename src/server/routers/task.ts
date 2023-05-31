@@ -45,11 +45,10 @@ export const taskRouter = router({
           title: input.title,
           description: input.description,
           order: input.order,
-          subtasks: input.subtasks,
           subtasks: {
             deleteMany: {
-              taskId: input.id || '',
-              NOT: input.subtasks?.map((sub) => ({ id: sub.id })),
+              taskId: input.id,
+              NOT: input.subtasks?.map((col) => ({ id: col.id })),
             },
             upsert: input.subtasks?.map((sub) => ({
               create: sub,

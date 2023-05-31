@@ -44,12 +44,14 @@ export default function BoardFormModal() {
   const router = useRouter()
   const utils = api.useContext()
   const { errorToast } = useErrorToast()
-  const currentBoard = useCurrentBoardStore(({ board }) => board)
+  const { board: currentBoard, setBoard: setCurrentBoard } =
+    useCurrentBoardStore()
   const { isBoardFormOpen, closeBoardForm, formMode } = useBoardFormStore()
   const { mutateAsync: createOrUpdateBoard, isLoading } =
     api.board.createOrUpdate.useMutation({
       onSuccess: async (data) => {
         utils.board.invalidate()
+        setCurrentBoard(data)
         router.push(data.id)
         formRef.current?.resetForm()
         closeBoardForm()
@@ -89,27 +91,20 @@ export default function BoardFormModal() {
             validationSchema={toFormikValidationSchema(BoardFormValidation)}
             innerRef={formRef}
             onSubmit={async (values) => {
-              const columnsWithUpdatedOrder = values.columns.map(
-                (col, index) => ({
-                  ...col,
-                  order: index,
-                  tasks: !!col.tasks?.length ? col.tasks : undefined,
-                })
-              )
+              const formattedColumns = values.columns.map((col, index) => ({
+                ...col,
+                order: index,
+                tasks: undefined,
+              }))
 
-              console.log('columns: ', columnsWithUpdatedOrder)
-
-              const payload = {
+              await createOrUpdateBoard({
                 ...values,
                 id: board?.id ?? undefined,
-                columns: columnsWithUpdatedOrder,
-              }
-
-              console.log('BoardformModal payload: ', payload)
-              await createOrUpdateBoard(payload)
+                columns: formattedColumns,
+              })
             }}
           >
-            {({ values, handleChange, handleBlur, errors }) => (
+            {({ values, handleChange, handleBlur }) => (
               <Form autoComplete="off">
                 <Flex direction="column" gap={2}>
                   <Flex direction="column" gap={5}>

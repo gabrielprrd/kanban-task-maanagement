@@ -36,19 +36,16 @@ export default function BoardPage() {
   )
   const taskNameColor = useColorModeValue('#000112', '#FFFFFF')
   const taskCardBgColor = useColorModeValue('#FFFFFF', '#2B2C37')
-  const newColumnButtonBgColor = useColorModeValue('#E4EBFA', '#20212C')
-
-  function openTaskDetails() {
-    setIsTaskDetailsOpen(true)
-  }
-
-  function handleCloseTaskDetails() {
-    setIsTaskDetailsOpen(false)
-  }
+  const newColumnButtonBgColor = useColorModeValue('#E4EBFA', '#2B2C37')
 
   function handleOpenTaskDetails(task: TaskType) {
     setTask(task)
-    openTaskDetails()
+    setIsTaskDetailsOpen(true)
+  }
+
+  function handleOpenEditBoardForm() {
+    setBoard(board)
+    openEditBoardForm()
   }
 
   function getColumnBallColor(i: number) {
@@ -73,9 +70,15 @@ export default function BoardPage() {
 
   if (isLoading)
     return (
-      <Center h="100%" w="100%">
-        <Spinner />
-      </Center>
+      <>
+        <Head>
+          <title>{'Loading | Kanban Web App'}</title>
+          <meta name="description" content="Achieve your goals" />
+        </Head>
+        <Center h="100%" w="100%">
+          <Spinner />
+        </Center>
+      </>
     )
 
   return (
@@ -84,13 +87,13 @@ export default function BoardPage() {
         <title>{board?.name ?? 'Kanban Web App'}</title>
         <meta name="description" content="Achieve your goals" />
       </Head>
-      {board?.columns?.length === 0 ? (
+      {!board?.columns?.length ? (
         <Center h="100%" w="100%">
           <VStack gap={2}>
             <Text color="#828FA3" fontWeight="bold" textAlign="center">
               This board is empty. Create a new column to get started.
             </Text>
-            <Button variant="primary" gap={1} onClick={openEditBoardForm}>
+            <Button variant="primary" gap={1} onClick={handleOpenEditBoardForm}>
               <AddIcon boxSize={2} />
               <Text display={{ base: 'none', sm: 'inline' }}>
                 Add New Column
@@ -166,7 +169,7 @@ export default function BoardPage() {
               bgColor={newColumnButtonBgColor}
               color="#828FA3"
               borderRadius="md"
-              onClick={openEditBoardForm}
+              onClick={handleOpenEditBoardForm}
               _hover={{
                 bgColor: newColumnButtonBgColor,
                 color: '#635FC7',
@@ -179,7 +182,7 @@ export default function BoardPage() {
           {!!task && (
             <TaskDetailsModal
               isOpen={isTaskDetailsOpen}
-              closeModal={handleCloseTaskDetails}
+              closeModal={() => setIsTaskDetailsOpen(false)}
             />
           )}
         </Flex>

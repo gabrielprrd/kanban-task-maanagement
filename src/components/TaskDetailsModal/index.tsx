@@ -26,7 +26,6 @@ import { FaEllipsisV } from 'react-icons/fa'
 import { Form, Formik, Field, FieldArray } from 'formik'
 import { api } from '@/utils/index'
 import AutoSave from '@/components/Form/AutoSave'
-import { useEffect } from 'react'
 
 interface Props {
   isOpen: boolean
@@ -55,7 +54,7 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
   })
   const { mutateAsync: createOrUpdateTask } =
     api.task.createOrUpdate.useMutation({
-      onSuccess: async (data) => {
+      onSuccess: async () => {
         utils.board.getById.invalidate()
       },
       onError: () => errorToast(),

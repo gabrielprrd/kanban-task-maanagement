@@ -34,7 +34,7 @@ import { toFormikValidationSchema } from 'zod-formik-adapter'
 import FieldArrayErrorMessage from '@/components/Form/FieldArrayErrorMessage'
 import { SubtaskType, TaskFormValidation } from '@/models/index'
 import { api } from '@/utils/index'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
 interface FormValues {
   title: string
@@ -117,14 +117,12 @@ export default function TaskFormModal() {
                 })
               )
 
-              console.log(subtasksWithUpdatedOrder)
-              const payload = {
+              await createOrUpdateTask({
                 ...values,
                 id: task?.id ?? undefined,
                 order: task?.order ?? task?.column.tasks?.length ?? 0,
                 subtasks: subtasksWithUpdatedOrder,
-              }
-              await createOrUpdateTask(payload)
+              })
             }}
           >
             {({ values, errors, handleChange, handleBlur }) => (

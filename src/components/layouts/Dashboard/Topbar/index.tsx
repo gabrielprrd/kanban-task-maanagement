@@ -105,6 +105,7 @@ export default function Topbar() {
               >
                 <Button
                   variant="primary"
+                  aria-label="Add new task"
                   gap={1}
                   onClick={openNewTaskFormModal}
                   isDisabled={!board?.columns?.length}
