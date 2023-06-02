@@ -125,7 +125,7 @@ export default function BoardFormModal() {
                           </FormLabel>
                           <Input {...field} focusBorderColor="#635FC7" />
                           <FormErrorMessage>
-                            {form.errors.description as string}
+                            {form.errors.name as string}
                           </FormErrorMessage>
                         </FormControl>
                       )}

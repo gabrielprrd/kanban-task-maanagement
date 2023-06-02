@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { protectedProcedure, createTRPCRouter } from '../trpc'
 import { CreateOrUpdateTask } from '@/models/index'
-import { handleRateLimit } from '@/utils/index'
+import { handleRateLimit } from '../rateLimit'
 
 const uuid = z.string().uuid().optional()
 
