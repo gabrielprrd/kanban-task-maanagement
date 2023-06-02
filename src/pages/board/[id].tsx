@@ -16,15 +16,19 @@ import {
   useCurrentBoardStore,
   useCurrentTaskStore,
 } from '@/hooks/index'
-import { useEffect, useState } from 'react'
+import { ReactElement, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import TaskDetailsModal from '@/components/TaskDetailsModal'
-import { api } from '@/utils/index'
+import { api, requireAuth } from '@/utils/index'
 import Head from 'next/head'
 import Spinner from '@/components/Spinner'
+import DashboardLayout from '@/components/layouts/Dashboard'
+import { useSession } from 'next-auth/react'
+import { GetServerSidePropsContext } from 'next'
 
 export default function BoardPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [isTaskDetailsOpen, setIsTaskDetailsOpen] = useState(false)
   const setBoard = useCurrentBoardStore(({ setBoard }) => setBoard)
   const openEditBoardForm = useBoardFormStore(
@@ -32,7 +36,10 @@ export default function BoardPage() {
   )
   const { task, setTask } = useCurrentTaskStore()
   const { data: board, isLoading } = api.board.getById.useQuery(
-    router.query.id as string
+    router.query.id as string,
+    {
+      enabled: !!session?.user?.email,
+    }
   )
   const taskNameColor = useColorModeValue('#000112', '#FFFFFF')
   const taskCardBgColor = useColorModeValue('#FFFFFF', '#2B2C37')
@@ -189,4 +196,12 @@ export default function BoardPage() {
       )}
     </>
   )
+}
+
+BoardPage.getLayout = function (page: ReactElement) {
+  return <DashboardLayout>{page}</DashboardLayout>
+}
+
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  return requireAuth(ctx, (session) => ({ props: { session } }))
 }

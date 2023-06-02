@@ -57,8 +57,8 @@ export default function TaskFormModal() {
   const board = useCurrentBoardStore(({ board }) => board)
   const { mutateAsync: createOrUpdateTask, isLoading } =
     api.task.createOrUpdate.useMutation({
-      onSuccess: (data) => {
-        utils.board.invalidate()
+      onSuccess: async (data) => {
+        utils.board.getById.invalidate()
         setCurrentTask(data)
         formRef.current?.resetForm()
         closeTaskForm()

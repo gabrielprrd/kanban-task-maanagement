@@ -56,6 +56,8 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
     api.task.createOrUpdate.useMutation({
       onSuccess: async () => {
         utils.board.getById.invalidate()
+        utils.task.invalidate()
+        // reset task to zustand in order to update
       },
       onError: () => errorToast(),
     })

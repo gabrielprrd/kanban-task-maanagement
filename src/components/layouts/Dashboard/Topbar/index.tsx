@@ -13,10 +13,11 @@ import {
   useColorModeValue,
   useDisclosure,
 } from '@chakra-ui/react'
-import AppLogo from '../AppLogo'
+import AppLogo from '@/components/layouts/Dashboard/AppLogo'
 import { FaEllipsisV, FaChevronDown } from 'react-icons/fa'
 import { AddIcon } from '@chakra-ui/icons'
-import MobileTopbarModal from '../MobileTopbarModal'
+import MobileTopbarModal from '@/components/layouts/Dashboard/MobileTopbarModal'
+import AvatarMenuButton from '@/components/AvatarMenuButton'
 import {
   useBoardFormStore,
   useConfirmActionModalStore,
@@ -27,9 +28,12 @@ import {
 } from '@/hooks/index'
 import { api } from '@/utils/index'
 import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
 
 export default function Topbar() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const utils = api.useContext()
   const { errorToast } = useErrorToast()
   const { isOpen, onClose, onOpen } = useDisclosure()
   const setTask = useCurrentTaskStore(({ setTask }) => setTask)
@@ -38,11 +42,17 @@ export default function Topbar() {
     ({ openEditBoardForm }) => openEditBoardForm
   )
   const board = useCurrentBoardStore(({ board }) => board)
-  const { refetch: refetchBoards } = api.board.getAll.useQuery()
+  const { refetch: refetchBoards } = api.board.getAll.useQuery(undefined, {
+    enabled: !!session?.user?.email,
+  })
   const { mutate: deleteBoard } = api.board.deleteById.useMutation({
     onSuccess: async () => {
+      utils.board.invalidate()
       const updatedBoardList = await refetchBoards()
-      router.push('/board/' + updatedBoardList.data?.boards[0].id)
+      const routeToRedirect = !!updatedBoardList.data?.boards.length
+        ? '/board/' + updatedBoardList.data?.boards[0].id
+        : '/'
+      router.push(routeToRedirect)
     },
     onError: () => errorToast(),
   })
@@ -84,7 +94,7 @@ export default function Topbar() {
       >
         <Flex gap={{ base: 2, sm: 10 }} align="center">
           <AppLogo />
-          <Heading>{board?.name}</Heading>
+          <Heading>{board?.name ?? ''}</Heading>
           <IconButton
             aria-label="Show navbar"
             display={{ sm: 'none' }}
@@ -140,6 +150,7 @@ export default function Topbar() {
               </Menu>
             </>
           )}
+          {!!session?.user && <AvatarMenuButton />}
         </Flex>
       </HStack>
       <MobileTopbarModal isOpen={isOpen} onClose={onClose} />

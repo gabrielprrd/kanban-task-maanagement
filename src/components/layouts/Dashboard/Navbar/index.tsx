@@ -6,10 +6,13 @@ import { useRouter } from 'next/router'
 import { api } from '@/utils/index'
 import { useBoardFormStore, useErrorToast } from '@/hooks/index'
 import Spinner from '@/components/Spinner'
+import { useSession } from 'next-auth/react'
 
 export default function Navbar() {
   const { errorToast } = useErrorToast()
+  const { data: session } = useSession()
   const { data, error, isLoading } = api.board.getAll.useQuery(undefined, {
+    enabled: !!session?.user?.email,
     onError: () =>
       errorToast({
         title: 'Error',

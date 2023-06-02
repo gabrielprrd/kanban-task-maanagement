@@ -47,17 +47,20 @@ export default function BoardFormModal() {
   const { board: currentBoard, setBoard: setCurrentBoard } =
     useCurrentBoardStore()
   const { isBoardFormOpen, closeBoardForm, formMode } = useBoardFormStore()
-  const { mutateAsync: createOrUpdateBoard, isLoading } =
-    api.board.createOrUpdate.useMutation({
-      onSuccess: async (data) => {
-        utils.board.invalidate()
-        setCurrentBoard(data)
-        router.push(data.id)
-        formRef.current?.resetForm()
-        closeBoardForm()
-      },
-      onError: () => errorToast(),
-    })
+  const {
+    mutateAsync: createOrUpdateBoard,
+    isLoading,
+    isSuccess,
+  } = api.board.createOrUpdate.useMutation({
+    onSuccess: async (data) => {
+      utils.board.invalidate()
+      setCurrentBoard(data)
+      formRef.current?.resetForm()
+      closeBoardForm()
+      if (isSuccess) router.push('/board/' + data.id)
+    },
+    onError: () => errorToast(),
+  })
 
   const board = formMode === 'create' ? null : currentBoard
   const formTitle = formMode === 'create' ? 'Add New Board' : 'Edit Board'

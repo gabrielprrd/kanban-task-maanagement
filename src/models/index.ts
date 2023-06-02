@@ -95,7 +95,7 @@ export type BoardType = {
 
 export const Board: z.ZodType<BoardType> = z.object({
   id: z.string().uuid(),
-  name: z.string().trim(),
+  name: z.string().max(20).trim(),
   columns: z.array(Column).optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
@@ -110,18 +110,18 @@ export const CreateOrUpdateBoard = z.object({
 // Validations
 
 export const BoardFormValidation = z.object({
-  name: z.string().trim(),
+  name: z.string().max(20).trim(),
   columns: z.array(z.object({ name: z.string().nonempty() })).optional(),
 })
 
 export const SubtaskValidation = z.object({
-  title: z.string().trim(),
+  title: z.string().max(30).trim(),
   id: z.string().uuid().optional(),
 })
 
 export const TaskFormValidation = z.object({
-  title: z.string().trim(),
-  description: z.string().trim().optional(),
+  title: z.string().max(30).trim(),
+  description: z.string().max(200).trim().optional(),
   order: z.number().default(0),
   subtasks: z.array(SubtaskValidation).optional(),
   column: z.string().uuid(),

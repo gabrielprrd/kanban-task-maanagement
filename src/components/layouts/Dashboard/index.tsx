@@ -1,22 +1,40 @@
 import { Box, Grid, GridItem, useColorModeValue } from '@chakra-ui/react'
-import { ReactElement, useState } from 'react'
+import { ReactElement, useEffect, useState } from 'react'
 import DesktopToggleSidebarButton from './DesktopToggleSidebarButton'
 import Topbar from './Topbar'
 import Sidebar from './Sidebar'
 import TaskFormModal from '@/components/TaskFormModal/index'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
 import BoardFormModal from '@/components/BoardFormModal'
+import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
+import { api } from '@/utils/index'
+import { useCurrentBoardStore } from '@/hooks/index'
 
 interface Props {
   children: ReactElement
 }
 
 export default function DashboardLayout({ children }: Props) {
+  const router = useRouter()
+  const { data: session } = useSession()
   const [isSidebarHidden, setIsSidebarHidden] = useState(false)
+  const { currentBoard, setBoard: setCurrentBoard } = useCurrentBoardStore()
 
+  const { data: board, isLoading } = api.board.getById.useQuery(
+    router.query.id as string,
+    {
+      enabled: !!session?.user?.email && !!router.query.id,
+    }
+  )
   function toggleSidebarVisibility() {
     setIsSidebarHidden(!isSidebarHidden)
   }
+
+  useEffect(() => {
+    setCurrentBoard(board ?? null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query, isLoading, currentBoard])
 
   return (
     <>

@@ -3,24 +3,39 @@ import theme from '@/styles/theme'
 import Head from 'next/head'
 import { ChakraProvider } from '@chakra-ui/react'
 import { Plus_Jakarta_Sans } from '@next/font/google'
-import DashboardLayout from '@/components/layouts/Dashboard'
 import { api } from '@/utils/index'
+import { SessionProvider } from 'next-auth/react'
+import { NextPage } from 'next'
+import { ReactElement, ReactNode } from 'react'
 
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] })
 
-function App({ Component, pageProps }: AppProps) {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode
+}
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout
+}
+
+function App({
+  Component,
+  pageProps: { session, ...pageProps },
+}: AppPropsWithLayout) {
+  const getLayout = Component.getLayout ?? ((page) => page)
   return (
     <>
       <Head>
         <link rel="shortcut icon" href="/favicon.png" />
       </Head>
-      <ChakraProvider resetCSS theme={theme}>
-        <main className={plusJakartaSans.className}>
-          <DashboardLayout>
-            <Component {...pageProps} />
-          </DashboardLayout>
-        </main>
-      </ChakraProvider>
+      <SessionProvider session={session}>
+        <ChakraProvider resetCSS theme={theme}>
+          <main className={plusJakartaSans.className}>
+            {getLayout(<Component {...pageProps} />)}
+          </main>
+        </ChakraProvider>
+      </SessionProvider>
     </>
   )
 }

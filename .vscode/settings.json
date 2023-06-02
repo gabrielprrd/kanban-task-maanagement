@@ -9,11 +9,15 @@
     "source.fixAll": true
   },
   "cSpell.words": [
+    "Authed",
     "formik",
     "Kanban",
+    "ratelimit",
+    "ratelimiter",
     "superjson",
     "Topbar",
     "TRPC",
+    "upstash",
     "uuidv",
     "zustand"
   ],

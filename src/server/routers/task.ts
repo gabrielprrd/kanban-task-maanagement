@@ -1,11 +1,12 @@
 import { z } from 'zod'
-import { procedure, router } from '../trpc'
+import { protectedProcedure, createTRPCRouter } from '../trpc'
 import { CreateOrUpdateTask } from '@/models/index'
+import { handleRateLimit } from '@/utils/index'
 
 const uuid = z.string().uuid().optional()
 
-export const taskRouter = router({
-  getById: procedure.input(uuid).query(async ({ input, ctx }) => {
+export const taskRouter = createTRPCRouter({
+  getById: protectedProcedure.input(uuid).query(async ({ input, ctx }) => {
     return await ctx.dbClient.task.findUnique({
       where: {
         id: input,
@@ -21,9 +22,11 @@ export const taskRouter = router({
     })
   }),
 
-  createOrUpdate: procedure
+  createOrUpdate: protectedProcedure
     .input(CreateOrUpdateTask)
     .mutation(async ({ input, ctx }) => {
+      handleRateLimit(ctx.session.user.id)
+
       return await ctx.dbClient.task.upsert({
         create: {
           title: input.title,
@@ -75,11 +78,15 @@ export const taskRouter = router({
       })
     }),
 
-  deleteById: procedure.input(uuid).mutation(async ({ input, ctx }) => {
-    return await ctx.dbClient.task.delete({
-      where: {
-        id: input,
-      },
-    })
-  }),
+  deleteById: protectedProcedure
+    .input(uuid)
+    .mutation(async ({ input, ctx }) => {
+      handleRateLimit(ctx.session.user.id)
+
+      return await ctx.dbClient.task.delete({
+        where: {
+          id: input,
+        },
+      })
+    }),
 })
