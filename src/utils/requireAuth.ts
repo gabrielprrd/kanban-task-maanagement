@@ -5,20 +5,15 @@ export const requireAuth = async (
   context: GetSessionParams,
   cb: (session: Session) => unknown
 ) => {
-  try {
-    const session = await getSession(context)
+  const session = await getSession(context)
 
-    if (!session) {
-      return {
-        redirect: {
-          destination: '/login',
-          permanent: false,
-        },
-      }
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
     }
-    return cb(session)
-  } catch (err) {
-    // TODO: handle error
-    return
   }
+  return cb(session)
 }

@@ -70,7 +70,7 @@ export type ColumnType = {
 
 export const Column: z.ZodType<ColumnType> = z.object({
   id: z.string().uuid(),
-  name: z.string().trim(),
+  name: z.string().max(20).trim(),
   order: z.number(),
   tasks: z.lazy(() => z.array(Task).optional()),
   createdAt: z.date().optional(),

@@ -25,6 +25,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ## Todo:
 
 [ ] Deploy on Vercel
+[ ] Multiple auth options
 [ ] Drag and drop
 [ ] Abstract form components
 [ ] Custom 404 page

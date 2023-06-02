@@ -19,7 +19,8 @@ export default function DashboardLayout({ children }: Props) {
   const router = useRouter()
   const { data: session } = useSession()
   const [isSidebarHidden, setIsSidebarHidden] = useState(false)
-  const { currentBoard, setBoard: setCurrentBoard } = useCurrentBoardStore()
+  const { board: currentBoard, setBoard: setCurrentBoard } =
+    useCurrentBoardStore()
 
   const { data: board, isLoading } = api.board.getById.useQuery(
     router.query.id as string,
