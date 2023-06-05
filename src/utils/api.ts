@@ -1,4 +1,4 @@
-import { httpBatchLink } from '@trpc/client'
+import { httpBatchLink, loggerLink } from '@trpc/client'
 import { createTRPCNext } from '@trpc/next'
 import type { AppRouter } from '../server/routers/_app'
 import { isServer } from './isServer'
@@ -27,6 +27,11 @@ export const api = createTRPCNext<AppRouter>({
       transformer: superjson,
       abortOnUnmount: true,
       links: [
+        loggerLink({
+          enabled: (opts) =>
+            process.env.NODE_ENV === 'development' ||
+            (opts.direction === 'down' && opts.result instanceof Error),
+        }),
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
         }),
