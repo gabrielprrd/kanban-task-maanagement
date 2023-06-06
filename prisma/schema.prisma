@@ -2,6 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator zod {
+  provider                  = "zod-prisma-types"
+  output                    = "../src/models/generated"
+  createRelationValuesTypes = true
+}
+
 datasource db {
   provider          = "mysql"
   url               = env("DATABASE_URL")
@@ -40,7 +46,7 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(cuid()) /// @zod.string.noDefault()
   name          String?
   email         String?   @unique
   emailVerified DateTime?
@@ -59,7 +65,7 @@ model VerificationToken {
 }
 
 model Subtask {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid()) /// @zod.string.noDefault()
   title      String
   isComplete Boolean
   order      Int
@@ -72,7 +78,7 @@ model Subtask {
 }
 
 model Task {
-  id          String    @id @default(uuid())
+  id          String    @id @default(uuid()) /// @zod.string.noDefault()
   title       String
   description String?
   subtasks    Subtask[]
@@ -86,7 +92,7 @@ model Task {
 }
 
 model Column {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) /// @zod.string.noDefault()
   name      String
   order     Int
   tasks     Task[]
@@ -99,7 +105,7 @@ model Column {
 }
 
 model Board {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) /// @zod.string.noDefault()
   name      String
   columns   Column[]
   createdAt DateTime @default(now())

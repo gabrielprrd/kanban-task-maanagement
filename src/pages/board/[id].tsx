@@ -1,4 +1,4 @@
-import { TaskType } from '@/models/index'
+import { TaskWithRelations } from '@/models/generated'
 import { AddIcon } from '@chakra-ui/icons'
 import {
   Box,
@@ -36,7 +36,11 @@ export default function BoardPage() {
   )
   const { task, setTask } = useCurrentTaskStore()
   const { data: board, isLoading } = api.board.getById.useQuery(
-    router.query.id as string,
+    {
+      where: {
+        id: router.query.id as string,
+      },
+    },
     {
       enabled: !!session?.user?.email,
     }
@@ -45,13 +49,14 @@ export default function BoardPage() {
   const taskCardBgColor = useColorModeValue('#FFFFFF', '#2B2C37')
   const newColumnButtonBgColor = useColorModeValue('#E4EBFA', '#2B2C37')
 
-  function handleOpenTaskDetails(task: TaskType) {
+  function handleOpenTaskDetails(task: TaskWithRelations) {
     setTask(task)
     setIsTaskDetailsOpen(true)
   }
 
   function handleOpenEditBoardForm() {
-    setBoard(board)
+    // @ts-ignore
+    setBoard(board ?? null)
     openEditBoardForm()
   }
 
@@ -60,7 +65,7 @@ export default function BoardPage() {
     return colors[i % colors.length]
   }
 
-  function getSubtasksText(task: TaskType) {
+  function getSubtasksText(task: TaskWithRelations) {
     if (!task?.subtasks?.length) {
       return ''
     }
@@ -71,7 +76,8 @@ export default function BoardPage() {
   }
 
   useEffect(() => {
-    setBoard(board)
+    // @ts-ignore
+    setBoard(board ?? null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.query, isLoading])
 
@@ -148,6 +154,7 @@ export default function BoardPage() {
                       cursor="pointer"
                       role="group"
                       boxShadow="md"
+                      // @ts-ignore
                       onClick={() => handleOpenTaskDetails(task)}
                     >
                       <Flex direction="column" gap={1}>
@@ -162,6 +169,7 @@ export default function BoardPage() {
                           {task.title}
                         </Text>
                         <Text fontSize="xs" fontWeight="bold" color="#828FA3">
+                          {/* @ts-ignore */}
                           {getSubtasksText(task)}
                         </Text>
                       </Flex>

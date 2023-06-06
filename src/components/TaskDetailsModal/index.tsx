@@ -52,15 +52,13 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
     },
     onError: () => errorToast(),
   })
-  const { mutateAsync: createOrUpdateTask } =
-    api.task.createOrUpdate.useMutation({
-      onSuccess: async () => {
-        utils.board.getById.invalidate()
-        utils.task.invalidate()
-        // reset task to zustand in order to update
-      },
-      onError: () => errorToast(),
-    })
+  const { mutateAsync: updateTask } = api.task.update.useMutation({
+    onSuccess: async () => {
+      utils.board.getById.invalidate()
+      utils.task.invalidate()
+    },
+    onError: () => errorToast(),
+  })
 
   const checkboxBgColor = useColorModeValue('#F4F7FD', '#20212C')
   const checkboxTextColor = useColorModeValue('#000112', '#FFFFFF')
@@ -78,7 +76,7 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
       `Are you sure you want to delete the '${task?.title}' task? This action will remove all columns and tasks and cannot be reversed.`
     )
     setConfirmCallback(() => {
-      if (task?.id) deleteTask(task?.id)
+      if (task?.id) deleteTask({ where: { id: task?.id } })
     })
     openConfirmActionModal()
   }
@@ -141,20 +139,29 @@ export default function TaskDetailsModal({ isOpen, closeModal }: Props) {
             }}
             enableReinitialize
             onSubmit={async (values) => {
-              const subtasksWithUpdatedOrder = values.subtasks?.map(
-                (sub, index) => ({
-                  ...sub,
-                  order: index,
-                })
-              )
-
-              await createOrUpdateTask({
-                ...task,
-                ...values,
-                id: task?.id ?? undefined,
-                order: task?.order ?? task?.column.tasks?.length ?? 0,
-                subtasks: subtasksWithUpdatedOrder,
-              })
+              const payload = {
+                data: {
+                  subtasks: {
+                    update: values.subtasks?.map((sub) => ({
+                      where: {
+                        id: sub.id || '',
+                      },
+                      data: {
+                        isComplete: sub.isComplete,
+                      },
+                    })),
+                  },
+                  column: {
+                    connect: {
+                      id: values.column,
+                    },
+                  },
+                },
+                where: {
+                  id: task?.id || '',
+                },
+              }
+              await updateTask(payload)
             }}
           >
             {({ values }) => (

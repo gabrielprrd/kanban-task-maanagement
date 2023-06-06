@@ -48,9 +48,9 @@ export default function Topbar() {
   const { mutate: deleteBoard } = api.board.deleteById.useMutation({
     onSuccess: async () => {
       utils.board.invalidate()
-      const updatedBoardList = await refetchBoards()
-      const routeToRedirect = !!updatedBoardList.data?.boards.length
-        ? '/board/' + updatedBoardList.data?.boards[0].id
+      const { data: updatedBoardList } = await refetchBoards()
+      const routeToRedirect = !!updatedBoardList?.length
+        ? '/board/' + updatedBoardList[0].id
         : '/'
       router.push(routeToRedirect)
     },
@@ -72,7 +72,7 @@ export default function Topbar() {
       `Are you sure you want to delete the '${board?.name}' board? This action will remove all columns and tasks and cannot be reversed.`
     )
     setConfirmCallback(() => {
-      if (board?.id) deleteBoard(board?.id)
+      if (board?.id) deleteBoard({ where: { id: board?.id } })
     })
     openConfirmActionModal()
   }

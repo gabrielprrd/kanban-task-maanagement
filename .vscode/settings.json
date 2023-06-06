@@ -15,8 +15,11 @@
     "ratelimit",
     "ratelimiter",
     "superjson",
+    "svgr",
+    "tanstack",
     "Topbar",
     "TRPC",
+    "upsert",
     "upstash",
     "uuidv",
     "zustand"

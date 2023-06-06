@@ -22,7 +22,7 @@ import {
 } from 'formik'
 import { AddIcon } from '@chakra-ui/icons'
 import IconCross from '@/public/icons/icon-cross.svg'
-import { BoardFormValidation, ColumnType } from '@/models/index'
+import { BoardFormValidation } from '@/models/formValidations'
 import { toFormikValidationSchema } from 'zod-formik-adapter'
 import {
   useBoardFormStore,
@@ -33,14 +33,17 @@ import { api } from '@/utils/index'
 import { useRouter } from 'next/router'
 import FieldArrayErrorMessage from '@/components/Form/FieldArrayErrorMessage'
 import { useRef } from 'react'
+import { useSession } from 'next-auth/react'
+import { ColumnWithRelations } from '@/models/generated'
 
 interface FormValues {
   name: string
-  columns: ColumnType[]
+  columns: ColumnWithRelations[]
 }
 
 export default function BoardFormModal() {
   const formRef = useRef<FormikProps<FormValues>>(null)
+  const { data: session } = useSession()
   const router = useRouter()
   const utils = api.useContext()
   const { errorToast } = useErrorToast()
@@ -54,6 +57,7 @@ export default function BoardFormModal() {
   } = api.board.createOrUpdate.useMutation({
     onSuccess: async (data) => {
       utils.board.invalidate()
+      // @ts-ignore
       setCurrentBoard(data)
       formRef.current?.resetForm()
       closeBoardForm()
@@ -94,17 +98,50 @@ export default function BoardFormModal() {
             validationSchema={toFormikValidationSchema(BoardFormValidation)}
             innerRef={formRef}
             onSubmit={async (values) => {
-              const formattedColumns = values.columns.map((col, index) => ({
-                ...col,
-                order: index,
-                tasks: undefined,
-              }))
+              const payload = {
+                where: {
+                  id: board?.id || '00000000-0000-0000-0000-000000000000',
+                },
+                create: {
+                  name: values.name,
+                  columns: {
+                    create: values.columns.map((col, index) => ({
+                      name: col.name,
+                      order: index,
+                    })),
+                  },
+                  user: {
+                    connect: {
+                      id: session?.user.id,
+                    },
+                  },
+                },
+                update: {
+                  name: values.name,
+                  columns: {
+                    // TODO!: deleteMany prevents the creation of columns. The solution described here (https://github.com/prisma/prisma/issues/2255) for some reason is not working
+                    // deleteMany: {
+                    //   boardId: board?.id,
+                    //   NOT: values.columns?.map((col) => ({ id: col.id })),
+                    // },
+                    upsert: values.columns?.map((col, index) => ({
+                      where: {
+                        id: col.id || '',
+                      },
+                      create: {
+                        name: col.name,
+                        order: index,
+                      },
+                      update: {
+                        name: col.name,
+                        order: index,
+                      },
+                    })),
+                  },
+                },
+              }
 
-              await createOrUpdateBoard({
-                ...values,
-                id: board?.id ?? undefined,
-                columns: formattedColumns,
-              })
+              await createOrUpdateBoard(payload)
             }}
           >
             {({ values, handleChange, handleBlur }) => (

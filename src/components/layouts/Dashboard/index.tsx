@@ -23,7 +23,11 @@ export default function DashboardLayout({ children }: Props) {
     useCurrentBoardStore()
 
   const { data: board, isLoading } = api.board.getById.useQuery(
-    router.query.id as string,
+    {
+      where: {
+        id: router.query.id as string,
+      },
+    },
     {
       enabled: !!session?.user?.email && !!router.query.id,
     }
@@ -33,6 +37,7 @@ export default function DashboardLayout({ children }: Props) {
   }
 
   useEffect(() => {
+    // @ts-ignore
     setCurrentBoard(board ?? null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.query, isLoading, currentBoard])

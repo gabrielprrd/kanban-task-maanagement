@@ -32,19 +32,15 @@ import { AddIcon } from '@chakra-ui/icons'
 import IconCross from '@/public/icons/icon-cross.svg'
 import { toFormikValidationSchema } from 'zod-formik-adapter'
 import FieldArrayErrorMessage from '@/components/Form/FieldArrayErrorMessage'
-import { SubtaskType, TaskFormValidation } from '@/models/index'
+import { TaskFormValidation } from '@/models/formValidations'
+import { SubtaskWithRelations } from '@/models/generated'
 import { api } from '@/utils/index'
 import { useRef } from 'react'
 
 interface FormValues {
   title: string
   description: string
-  subtasks:
-    | SubtaskType[]
-    | {
-        title: string
-        isComplete: boolean
-      }[]
+  subtasks: SubtaskWithRelations[]
   column: string | null | undefined
 }
 
@@ -59,6 +55,7 @@ export default function TaskFormModal() {
     api.task.createOrUpdate.useMutation({
       onSuccess: async (data) => {
         utils.board.getById.invalidate()
+        // @ts-ignore
         setCurrentTask(data)
         formRef.current?.resetForm()
         closeTaskForm()
@@ -76,7 +73,7 @@ export default function TaskFormModal() {
     return placeholders[i % placeholders.length]
   }
 
-  const initialSubtaskValue = { title: '', isComplete: false }
+  const initialSubtaskValue = { title: '', isComplete: false, id: '' }
 
   const initialValues = {
     title: task?.title ?? '',
@@ -110,19 +107,63 @@ export default function TaskFormModal() {
             initialValues={initialValues}
             validationSchema={toFormikValidationSchema(TaskFormValidation)}
             onSubmit={async (values) => {
-              const subtasksWithUpdatedOrder = values.subtasks.map(
-                (sub, index) => ({
-                  ...sub,
-                  order: index,
-                })
-              )
+              const payload = {
+                where: {
+                  id: task?.id || '',
+                },
+                create: {
+                  title: values.title,
+                  subtasks: {
+                    create: values.subtasks.map((sub, index) => ({
+                      title: sub.title,
+                      isComplete: sub.isComplete,
+                      order: index,
+                    })),
+                  },
+                  description: values.description,
+                  order: task?.order ?? task?.column.tasks?.length ?? 0,
+                  column: {
+                    connect: {
+                      id: values.column,
+                    },
+                  },
+                },
+                update: {
+                  title: values.title,
+                  description: values.description,
+                  order: task?.order ?? task?.column.tasks?.length ?? 0,
+                  subtasks: {
+                    // TODO!: deleteMany prevents the creation of subtasks. The solution described here (https://github.com/prisma/prisma/issues/2255) for some reason is not working
+                    // deleteMany: {
+                    //   taskId: task?.id,
+                    //   NOT: values.subtasks.map((sub) => ({ id: sub.id })),
+                    // },
+                    upsert: values.subtasks.map((sub, index) => ({
+                      where: {
+                        id: sub.id,
+                      },
+                      create: {
+                        title: sub.title,
+                        isComplete: sub.isComplete,
+                        order: index,
+                        id: sub.id,
+                      },
+                      update: {
+                        title: sub.title,
+                        isComplete: sub.isComplete,
+                        order: index,
+                      },
+                    })),
+                  },
+                  column: {
+                    connect: {
+                      id: values.column,
+                    },
+                  },
+                },
+              }
 
-              await createOrUpdateTask({
-                ...values,
-                id: task?.id ?? undefined,
-                order: task?.order ?? task?.column.tasks?.length ?? 0,
-                subtasks: subtasksWithUpdatedOrder,
-              })
+              await createOrUpdateTask(payload)
             }}
           >
             {({ values, errors, handleChange, handleBlur }) => (

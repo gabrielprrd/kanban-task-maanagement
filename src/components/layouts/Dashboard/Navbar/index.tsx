@@ -11,7 +11,11 @@ import { useSession } from 'next-auth/react'
 export default function Navbar() {
   const { errorToast } = useErrorToast()
   const { data: session } = useSession()
-  const { data, error, isLoading } = api.board.getAll.useQuery(undefined, {
+  const {
+    data: boards,
+    error,
+    isLoading,
+  } = api.board.getAll.useQuery(undefined, {
     enabled: !!session?.user?.email,
     onError: () =>
       errorToast({
@@ -36,10 +40,10 @@ export default function Navbar() {
   return (
     <Flex direction="column" px={2}>
       <Text p={3} size="md" color="#828FA3" letterSpacing={1}>
-        {'All boards'.toUpperCase()} ({data.boards && data.boards.length})
+        {'All boards'.toUpperCase()} ({boards && boards.length})
       </Text>
-      {data.boards &&
-        data.boards.map((board) => (
+      {boards &&
+        boards.map((board) => (
           <Link
             as={NextLink}
             color={board.id === router.query.id ? '#FFFFFF' : '#828FA3'}

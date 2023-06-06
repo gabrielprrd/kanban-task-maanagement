@@ -1,9 +1,9 @@
-import { BoardType } from '@/models/index'
+import { BoardWithRelations } from '@/models/generated'
 import { create } from 'zustand'
 
 interface CurrentBoardStore {
-  board: BoardType | null
-  setBoard: (board: BoardType | null) => void
+  board: BoardWithRelations | null
+  setBoard: (board: BoardWithRelations | null) => void
 }
 
 export const useCurrentBoardStore = create<CurrentBoardStore>((set) => ({
