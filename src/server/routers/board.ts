@@ -1,80 +1,91 @@
-import { z } from 'zod'
-import { procedure, router } from '../trpc'
-import { CreateOrUpdateBoard } from '@/models/index'
+import { protectedProcedure, createTRPCRouter } from '../trpc'
+import { handleRateLimit } from '../rateLimit'
+import {
+  BoardDeleteArgsSchema,
+  BoardFindUniqueArgsSchema,
+  BoardUpsertArgsSchema,
+} from '@/models/generated'
 
-const objectWithIdValidator = z.object({
-  id: z.string().uuid().optional(),
-})
-
-export const boardRouter = router({
-  getAll: procedure.query(async ({ ctx }) => {
-    const boards = await ctx.dbClient.board.findMany({
+export const boardRouter = createTRPCRouter({
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.dbClient.board.findMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
       orderBy: {
         name: 'asc',
       },
+      include: {
+        columns: {
+          include: {
+            tasks: true,
+          },
+        },
+      },
     })
-    return { boards }
   }),
 
-  getById: procedure
-    .input(objectWithIdValidator)
+  getById: protectedProcedure
+    .input(BoardFindUniqueArgsSchema)
     .query(async ({ input, ctx }) => {
       return await ctx.dbClient.board.findUnique({
-        where: {
-          id: input.id,
-        },
+        ...input,
         include: {
           columns: {
             orderBy: {
               order: 'asc',
             },
-          },
-        },
-      })
-    }),
-
-  createOrUpdate: procedure
-    .input(CreateOrUpdateBoard)
-    .mutation(async ({ input, ctx }) => {
-      return await ctx.dbClient.board.upsert({
-        create: {
-          name: input.name,
-          columns: {
-            create: input.columns,
-          },
-        },
-        where: {
-          id: input.id || '',
-        },
-        update: {
-          name: input.name,
-          columns: {
-            upsert: input.columns?.map((col) => ({
-              create: col, // This "create" doesn't work for now
-              where: {
-                id: col.id || '',
+            include: {
+              tasks: {
+                include: {
+                  subtasks: {
+                    orderBy: {
+                      order: 'asc',
+                    },
+                  },
+                  column: true,
+                },
               },
-              update: col,
-            })),
-            deleteMany: {
-              boardId: input.id,
-              NOT: input.columns?.map((col) => ({ id: col.id })),
             },
           },
         },
+      })
+    }),
+
+  createOrUpdate: protectedProcedure
+    .input(BoardUpsertArgsSchema)
+    .mutation(async ({ input, ctx }) => {
+      handleRateLimit(ctx.session.user.id)
+
+      return await ctx.dbClient.board.upsert({
+        ...input,
         include: {
-          columns: true,
+          columns: {
+            orderBy: {
+              order: 'asc',
+            },
+            include: {
+              tasks: {
+                include: {
+                  subtasks: {
+                    orderBy: {
+                      order: 'asc',
+                    },
+                  },
+                  column: true,
+                },
+              },
+            },
+          },
         },
       })
     }),
 
-  deleteById: procedure
-    .input(objectWithIdValidator)
+  deleteById: protectedProcedure
+    .input(BoardDeleteArgsSchema)
     .mutation(async ({ input, ctx }) => {
-      return await ctx.dbClient.board.delete({
-        where: {
-          id: input.id,
-        },
-      })
+      handleRateLimit(ctx.session.user.id)
+
+      return await ctx.dbClient.board.delete(input)
     }),
 })
