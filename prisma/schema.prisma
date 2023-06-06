@@ -9,47 +9,103 @@ datasource db {
   relationMode      = "prisma"
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid()) /// @zod.string.noDefault()
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  boards        Board[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model Subtask {
-  id          String   @id @default(uuid())
-  title       String
-  isCompleted Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Task        Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  taskId      String?
+  id         String   @id @default(uuid()) /// @zod.string.noDefault()
+  title      String
+  isComplete Boolean
+  order      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  taskId     String
 
   @@index([taskId])
 }
 
 model Task {
-  id        String    @id @default(uuid())
-  name      String
-  substasks Subtask[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Column    Column?   @relation(fields: [columnId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  columnId  String?
+  id          String    @id @default(uuid()) /// @zod.string.noDefault()
+  title       String
+  description String?
+  subtasks    Subtask[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  order       Int
+  column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  columnId    String
 
   @@index([columnId])
 }
 
 model Column {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) /// @zod.string.noDefault()
   name      String
-  order     Int      @default(0)
+  order     Int
   tasks     Task[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Board     Board?   @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  boardId   String?
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  boardId   String
 
   @@index([boardId])
 }
 
 model Board {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) /// @zod.string.noDefault()
   name      String
   columns   Column[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@index([userId])
 }
